@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Investor Payment Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Notification element -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- Login Screen -->
+    <div id="login-screen" class="container">
+        <div class="login-header">
+            <h1><i class="fas fa-dollar-sign"></i> Payment Tracker</h1>
+            <p>Login to manage investor payments</p>
+        </div>
+        <div class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" value="">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password" value="">
+            </div>
+            <button type="button" id="login-btn" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <div id="login-error" class="error-message">
+                Invalid credentials. Please try again.
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Container -->
+    <div id="app-container" class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>Investor Payment Tracker</h1>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div>
+                        <div class="user-name">Administrator</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <div class="btn-group">
+                        <button id="user-management-btn" class="btn btn-sm btn-info">
+                            <i class="fas fa-users"></i> Manage Users
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Projects filter on top -->
+        <div class="projects-filter" id="projects-filter">
+            <!-- Tabs will be dynamically added -->
+        </div>
+        
+        <div class="month-filter">
+            <label for="month-select">Filter by Month:</label>
+            <select id="month-select" class="form-control">
+                <option value="all">All Months</option>
+                <!-- Months will be populated dynamically -->
+            </select>
+        </div>
+        
+        <!-- Project Details Section -->
+        <div class="project-details" id="project-details">
+            <!-- Will be populated dynamically -->
+        </div>
+        
+        <div class="main-content">
+            <div class="content-area">
+                <div class="forms-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Add New Invoice</h2>
+                            <div class="btn-group">
+                                <button id="clear-invoice-form" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="invoice-form">
+                                <input type="hidden" id="invoice-id">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="project">Project</label>
+                                        <select class="form-control" id="project" required>
+                                            <option value="">Select Project</option>
+                                            <!-- Projects will be populated -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="invoice-type">Invoice Type</label>
+                                        <select class="form-control" id="invoice-type" required>
+                                            <option value="service">Revenue Invoice</option>
+                                            <option value="advance">Advance Invoice</option>
+                                            <option value="retention">Retention Invoice</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="agreement">Contract Number</label>
+                                        <input type="text" class="form-control" id="agreement" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="invoice-number">Invoice Number</label>
+                                        <input type="text" class="form-control" id="invoice-number" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="invoice-month">Invoice Month</label>
+                                        <input type="month" class="form-control" id="invoice-month" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="invoice-amount">Invoice Amount (₽)</label>
+                                        <input type="number" class="form-control" id="invoice-amount" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="retention">Retention Deducted (₽)</label>
+                                        <input type="number" class="form-control" id="retention" step="0.01" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="advance-deduction">Advance Deducted (₽)</label>
+                                        <input type="number" class="form-control" id="advance-deduction" step="0.01" value="0">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="due-date">Due Date</label>
+                                        <input type="date" class="form-control" id="due-date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary" id="save-invoice-btn">
+                                            <i class="fas fa-plus"></i> Add Invoice
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Record Payment</h2>
+                            <div class="btn-group">
+                                <button id="clear-payment-form" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="payment-form">
+                                <input type="hidden" id="payment-id">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="payment-invoice">Invoice Number</label>
+                                        <select class="form-control" id="payment-invoice" required>
+                                            <option value="">Select Invoice</option>
+                                            <!-- Invoices will be populated -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="payment-date">Payment Date</label>
+                                        <input type="date" class="form-control" id="payment-date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="payment-amount">Amount Received (₽)</label>
+                                        <input type="number" class="form-control" id="payment-amount" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="submit" class="btn btn-success" id="save-payment-btn">
+                                            <i class="fas fa-check"></i> Record Payment
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="invoice-summary-card">
+                    <div class="card-header">
+                        <h2>Invoice Summary</h2>
+                        <div class="btn-group">
+                            <button id="export-btn" class="btn btn-warning btn-sm">
+                                <i class="fas fa-file-excel"></i> Export
+                            </button>
+                            <button id="import-btn" class="btn btn-primary btn-sm">
+                                <i class="fas fa-file-import"></i> Import
+                            </button>
+                            <button id="clear-data-btn" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Clear Data
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tabs" id="project-tabs">
+                        <!-- Project tabs will be populated -->
+                    </div>
+                    <div class="card-body" id="invoice-summary-table-container">
+                        <table id="invoice-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Type</th>
+                                    <th>Project</th>
+                                    <th>Contract</th>
+                                    <th>Month</th>
+                                    <th>Amount (₽)</th>
+                                    <th>Retention (₽)</th>
+                                    <th>Advance Deducted (₽)</th>
+                                    <th>Due (₽)</th>
+                                    <th>Received (₽)</th>
+                                    <th>Balance (₽)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoice-body">
+                                <!-- Table content will be populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Monthly Report</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="title">Invoices This Month</div>
+                                <div class="value" id="invoices-month-value">0 ₽</div>
+                                <div class="trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span id="invoices-trend">0%</span> from last month
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="title">Received This Month</div>
+                                <div class="value" id="received-month-value">0 ₽</div>
+                                <div class="trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span id="received-trend">0%</span> from last month
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="title">Pending Payments</div>
+                                <div class="value" id="pending-value">0 ₽</div>
+                                <div class="trend down">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span id="pending-trend">0%</span> from last month
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="title">Avg. Payment Time</div>
+                                <div class="value" id="avg-time-value">0 days</div>
+                                <div class="trend down">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span id="avg-time-trend">0 days</span> improvement
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="project-comparison">
+                            <h3>Project Comparison (Current Month)</h3>
+                            <div class="chart-container">
+                                <canvas id="projectComparisonChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2023 Investor Payment Tracker | For Internal Use</p>
+            <p>Current User: <span id="current-user">Administrator</span> | <a href="#" id="logout-btn">Logout</a></p>
+        </footer>
+    </div>
+
+    <!-- Import/Export Modal -->
+    <div id="import-export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-excel"></i> Import/Export Data</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            
+            <div class="tabs" style="margin-bottom: 20px;">
+                <div class="tab active" data-tab="export">Export</div>
+                <div class="tab" data-tab="import">Import</div>
+                <div class="tab" data-tab="samples">Samples</div>
+            </div>
+            
+            <div class="tab-content active" id="export-tab">
+                <p>Export all data to Excel format:</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <button class="btn btn-warning" id="export-invoices-btn">
+                            <i class="fas fa-file-excel"></i> Export Invoices
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-warning" id="export-payments-btn">
+                            <i class="fas fa-file-excel"></i> Export Payments
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-warning" id="export-all-btn">
+                            <i class="fas fa-file-excel"></i> Export All
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="import-tab">
+                <p>Import data from Excel file:</p>
+                <div class="form-group">
+                    <label>Select Data Type:</label>
+                    <select class="form-control" id="import-type">
+                        <option value="invoices">Invoices</option>
+                        <option value="payments">Payments</option>
+                        <option value="both">Invoices & Payments</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Excel File:</label>
+                    <input type="file" class="form-control" id="import-file" accept=".xlsx, .xls">
+                </div>
+                <button class="btn btn-primary" id="import-data-btn">
+                    <i class="fas fa-file-import"></i> Import Data
+                </button>
+            </div>
+            
+            <div class="tab-content" id="samples-tab">
+                <div class="sample-container">
+                    <h4>Invoice File Format:</h4>
+                    <table class="sample-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Project</th>
+                                <th>Contract</th>
+                                <th>Type</th>
+                                <th>Month (YYYY-MM)</th>
+                                <th>Amount (₽)</th>
+                                <th>Retention (₽)</th>
+                                <th>Advance Deducted (₽)</th>
+                                <th>Due Date (YYYY-MM-DD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>INV-2023-001</td>
+                                <td>AGHK KPP</td>
+                                <td>AG-001</td>
+                                <td>service</td>
+                                <td>2023-01</td>
+                                <td>45000.00</td>
+                                <td>2250.00</td>
+                                <td>10000.00</td>
+                                <td>2023-02-15</td>
+                            </tr>
+                            <tr>
+                                <td>ADV-2023-007</td>
+                                <td>SNGI</td>
+                                <td>AG-002</td>
+                                <td>advance</td>
+                                <td>2023-03</td>
+                                <td>62500.00</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>2023-04-10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">
+                        <strong>Note:</strong> Date format must be YYYY-MM-DD, month format YYYY-MM
+                    </p>
+                </div>
+                
+                <div class="sample-container" style="margin-top: 20px;">
+                    <h4>Payment File Format:</h4>
+                    <table class="sample-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Payment Date (YYYY-MM-DD)</th>
+                                <th>Amount (₽)</th>
+                                <th>Payment Method</th>
+                                <th>Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>INV-2023-001</td>
+                                <td>2023-02-15</td>
+                                <td>32750.00</td>
+                                <td>Bank Transfer</td>
+                                <td>REF-001</td>
+                            </tr>
+                            <tr>
+                                <td>ADV-2023-007</td>
+                                <td>2023-04-10</td>
+                                <td>40000.00</td>
+                                <td>Bank Transfer</td>
+                                <td>REF-007</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">
+                        <strong>Note:</strong> Date format must be YYYY-MM-DD
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div id="add-project-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-folder-plus"></i> Add New Project</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="card-body">
+                <form id="project-form">
+                    <div class="form-group">
+                        <label for="project-name">Project Name</label>
+                        <input type="text" class="form-control" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-code">Project Code</label>
+                        <input type="text" class="form-control" id="project-code">
+                    </div>
+                    <div class="form-group">
+                        <label for="project-manager">Project Manager</label>
+                        <input type="text" class="form-control" id="project-manager">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="save-project-btn">
+                        <i class="fas fa-plus"></i> Add Project
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="user-management-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-users"></i> User Management</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <button id="add-user-btn" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Add New User
+                    </button>
+                </div>
+                
+                <table class="sample-table" style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Projects</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list">
+                        <!-- User list will be populated here -->
+                    </tbody>
+                </table>
+                
+                <div id="add-user-form" style="display: none; margin-top: 20px;">
+                    <h3>Add New User</h3>
+                    <form id="user-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="new-username">Username</label>
+                                <input type="text" class="form-control" id="new-username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password">Password</label>
+                                <input type="password" class="form-control" id="new-password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="user-role">Role</label>
+                                <select class="form-control" id="user-role" required>
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Projects Access</label>
+                            <div id="project-access" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                                <!-- Projects checkboxes will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save User
+                                </button>
+                                <button type="button" id="cancel-user-btn" class="btn btn-secondary">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+</body>
+</html>
